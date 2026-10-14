@@ -1,0 +1,11 @@
+blank_issues_enabled: false
+contact_links:
+  - name: ⚡ Book a demo
+    url: mailto:rehank9540@gmail.com?subject=FastPatch%20demo
+    about: See FastPatch run on a Kaseya console.
+  - name: 🧪 Pilot FastPatch on your fleet
+    url: mailto:rehank9540@gmail.com?subject=FastPatch%20pilot%20for%20our%20MSP
+    about: Start with one machine group.
+  - name: 🔒 Report a security issue
+    url: mailto:rehank9540@gmail.com?subject=FastPatch%20security%20report
+    about: Please report privately, not in a public issue.

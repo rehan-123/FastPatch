@@ -1,0 +1,28 @@
+name: 💡 Feature request
+description: Suggest something FastPatch should do on patch night.
+labels: ["enhancement"]
+body:
+  - type: markdown
+    attributes:
+      value: Please leave out client names, machine names and anything from your environment that shouldn't be public.
+  - type: textarea
+    id: problem
+    attributes:
+      label: What problem are you running into?
+      placeholder: e.g. Machines with X keep coming back as "needs an engineer"
+    validations:
+      required: true
+  - type: textarea
+    id: idea
+    attributes:
+      label: What would you like FastPatch to do?
+    validations:
+      required: true
+  - type: dropdown
+    id: platform
+    attributes:
+      label: Platform
+      options:
+        - Windows
+        - macOS
+        - Both
