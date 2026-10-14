@@ -33,4 +33,9 @@ Every result is timestamped, so an engineer reading the ticket sees what was tru
 
 ## What the NOC sees
 
-Instead of a spreadsheet of failures, the NOC gets one result line per machine (status, cause, action) and works only the exceptions. Every exception already carries one of the [five outcome labels](guardrails.md#the-five-outcomes).
+Instead of a spreadsheet of failures, the NOC gets one result line per machine (status, cause, action) and works only the exceptions. Every exception already carries one of the [six outcome labels](guardrails.md#the-six-outcomes).
+
+## New in beta
+
+- **[Auto-rollback](auto-rollback.md):** a baseline before the patch and a health check after the restart window. If the machine is broken, the new update is removed and proven gone.
+- **[macOS patching](macos.md):** the same loop on Macs, through Apple's softwareupdate.

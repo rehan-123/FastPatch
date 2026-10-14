@@ -20,7 +20,10 @@ No. It works alongside it: Kaseya still schedules, runs and logs. FastPatch adds
 The same flow runs on 10 machines or 100+.
 
 **What do we get back from each run?**
-One line per machine with status, cause and action, plus one of five outcome labels. See [guardrails](guardrails.md#the-five-outcomes).
+One line per machine with status, cause and action, plus one of six outcome labels. See [guardrails](guardrails.md#the-six-outcomes).
+
+**What if a patch breaks a machine?**
+[Auto-rollback](auto-rollback.md) compares the machine with its pre-patch baseline after your restart window and removes only the new update if something broke. No restart is forced, and it's reported as rolled back only after a restart proves the update is gone.
 
 ## For security teams
 
@@ -39,4 +42,7 @@ Every production release is approved by a person, and fixes stay inside the clie
 ## Platform
 
 **Which operating systems are supported?**
-Windows today. macOS support is the next build.
+Windows, plus macOS in beta. See [macOS patching](macos.md).
+
+**Can it roll back a Mac update?**
+No. Apple doesn't support removing installed macOS updates, so auto-rollback is Windows only.

@@ -4,8 +4,12 @@ All notable changes to FastPatch are recorded here. The format follows [Keep a C
 
 ## [Unreleased]
 
+### Added (beta)
+- **Auto-rollback for Windows:** baseline before the patch, health check after the restart window (services that ran before, required services, crash events). If the machine is unhealthy, only the new update is removed, staged with no restart, and reported as rolled back only after a restart proves it's gone. One attempt per update; servicing stack updates go to an engineer.
+- **macOS patching:** Apple updates through `softwareupdate` with disk, battery and catalog checks. No-restart updates install now; restart-required updates install on Intel and download for MDM or user approval on Apple silicon. Verify confirms each update is no longer offered. Never restarts a Mac.
+- New outcome label: **Rolled back**.
+
 ### Planned
-- macOS support (next build)
 - Reboot proof
 - Central result collection
 - Health checks

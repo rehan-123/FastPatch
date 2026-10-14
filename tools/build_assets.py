@@ -207,7 +207,7 @@ def fastpatch_hero():
     s = Svg(W, H, "FastPatch: patch night, on autopilot. Self-healing Windows patch remediation "
                   "for Kaseya VSA fleets. 600+ machines patched at 99% success. Detect, diagnose, "
                   "classify, remediate, verify, report. Never forces a reboot, never rewrites update "
-                  "policy. macOS support is next.")
+                  "policy. New: auto-rollback, and macOS patching in beta.")
     G1, G2 = "#3FD07A", "#16B3A0"
     s.defs.append(
         '<linearGradient id="fbg" x1="0" y1="0" x2="1" y2="1"><stop offset="0" stop-color="#08142B"/>'
@@ -251,7 +251,7 @@ def fastpatch_hero():
 
     px = X + 90
     pills = [("Live in production", GREEN, True), ("Built for Kaseya VSA", CYAN, False),
-             ("macOS next", AMBER, False)]
+             ("macOS beta", AMBER, False)]
     for lab, col, dot in pills:
         pw = measure(lab, "plex", 500, 13) + 24 + (14 if dot else 0)
         s.raw(f'<rect x="{px+0.5:.1f}" y="91.5" width="{pw:.1f}" height="24" rx="12" fill="{col}" '
@@ -286,9 +286,9 @@ def fastpatch_hero():
     rw = 3 * TW_ + 2 * TG_
     s.raw(f'<rect x="{TX+0.5}" y="{ry+0.5}" width="{rw-1}" height="63" rx="14" fill="{AMBER}" '
           f'fill-opacity="0.07" stroke="{AMBER}" stroke-opacity="0.45"/>')
-    s.icon("apple", TX + 16, ry + 18, 26, AMBER, 1.6)
-    s.text(TX + 54, ry + 28, "Coming next: macOS", "plex", 600, 15.5, ICE)
-    s.text(TX + 54, ry + 48, "Mac endpoints on the same loop", "plex", 400, 13.5, MIST)
+    s.icon("retry", TX + 16, ry + 19, 25, AMBER, 2)
+    s.text(TX + 54, ry + 28, "New: auto-rollback", "plex", 600, 15.5, ICE)
+    s.text(TX + 54, ry + 48, "A bad patch is removed and proven gone", "plex", 400, 13.5, MIST)
 
     # ---- the loop -----------------------------------------------------------
     s.text(X, 298, "THE LOOP", "mono", 700, 12.5, G1, extra='letter-spacing="2.5"')
@@ -432,6 +432,12 @@ FEATURES = [
      "Status, cause and action on one line per machine. The NOC works exceptions only."),
     ("box", "Nothing new to install",
      "Runs inside the Kaseya VSA you already have, as a signed procedure per group."),
+    ("retry", "Auto-rollback", "If the machine is unhealthy after the patch, the new update is "
+     "removed and proven gone after the restart.", "NEW"),
+    ("apple", "Patches Macs too", "Apple updates through softwareupdate, with the same checks, "
+     "guardrails and outcomes.", "BETA"),
+    ("clock", "Bounded by design", "One search, one download, one install per run. "
+     "No loops and no surprises on patch night."),
 ]
 
 
@@ -440,7 +446,7 @@ def features():
     CW, CH = (W - 64 - GAP * (COLS - 1)) / COLS, 192
     rows = (len(FEATURES) + COLS - 1) // COLS
     H = 116 + rows * CH + (rows - 1) * GAP + 32
-    s = Svg(W, H, "FastPatch features. " + " ".join(f"{t}: {d}" for _, t, d in FEATURES))
+    s = Svg(W, H, "FastPatch features. " + " ".join(f"{f[1]}: {f[2]}" for f in FEATURES))
     frame(s, W, H, CYAN, 0.9, 0.0)
     heading(s, 40, 52, "FEATURES", "Everything patch night needs. Nothing it doesn't.")
     s.defs.append(f'<linearGradient id="ftile" x1="0" y1="0" x2="1" y2="1"><stop offset="0" '
@@ -449,7 +455,9 @@ def features():
                  "@media (prefers-reduced-motion:no-preference){"
                  + "".join(f".fs{i}{{animation:fshine 4.8s ease-in-out {i*0.8:.1f}s infinite}}"
                            for i in range(len(FEATURES))) + "}")
-    for i, (ic, title, desc) in enumerate(FEATURES):
+    for i, f in enumerate(FEATURES):
+        ic, title, desc = f[0], f[1], f[2]
+        tag = f[3] if len(f) > 3 else None
         r, c = divmod(i, COLS)
         x = 32 + c * (CW + GAP)
         y = 116 + r * (CH + GAP)
@@ -460,6 +468,13 @@ def features():
         s.raw(f'<rect x="{x+22:.1f}" y="{y+24}" width="44" height="44" rx="12" fill="url(#ftile)"/>')
         s.icon(ic, x + 32, y + 34, 24, "#FFFFFF", 1.9)
         s.text(x + 22, y + 98, title, "plex", 600, 18, ICE)
+        if tag:
+            col = G1 if tag == "NEW" else AMBER
+            tw = measure(tag, "mono", 700, 11) + 18
+            s.raw(f'<rect x="{x+CW-22-tw:.1f}" y="{y+33}" width="{tw:.1f}" height="22" rx="11" '
+                  f'fill="{col}" fill-opacity="0.14" stroke="{col}" stroke-opacity="0.7"/>')
+            s.text(x + CW - 22 - tw / 2, y + 48, tag, "mono", 700, 11, col, anchor="middle",
+                   extra='letter-spacing="1"')
         for j, ln in enumerate(wrap(desc, CW - 44, "plex", 400, 14.5)):
             s.text(x + 22, y + 124 + j * 21, ln, "plex", 400, 14.5, "#B9C8DF")
     s.save("features.svg")
@@ -582,28 +597,106 @@ OUTCOMES = [
     ("retry", "Try again later", "Safe to retry next run", CYAN),
     ("clock", "Waiting for a restart", "Lands after your window", AMBER),
     ("fork", "Needs a decision", "A policy or approval call", VIOLET),
-    ("user", "Needs an engineer", "Comes with the cause", RED),
+    ("user", "Needs an engineer", "Handed over with the cause", RED),
+    ("shield", "Rolled back", "Bad update removed, proven gone", G1),
 ]
 
 
 def outcomes():
-    W, H = 1000, 250
-    s = Svg(W, H, "Every machine ends with one of five answers: " +
+    COLS, GAP, CH = 3, 12, 78
+    rows = (len(OUTCOMES) + COLS - 1) // COLS
+    W, H = 1000, 118 + rows * CH + (rows - 1) * GAP + 32
+    s = Svg(W, H, "Every machine ends with one of six answers: " +
             ", ".join(f"{t} ({d})" for _, t, d, _ in OUTCOMES))
     frame(s, W, H, VIOLET, 0.95, 0.0)
     heading(s, 40, 52, "OUTCOMES", "Every machine ends with a clear answer.", VIOLET)
-    n, GAP = len(OUTCOMES), 12
-    CW = (W - 64 - GAP * (n - 1)) / n
-    y = 118
+    CW = (W - 64 - GAP * (COLS - 1)) / COLS
     for i, (ic, t, d, col) in enumerate(OUTCOMES):
-        x = 32 + i * (CW + GAP)
-        s.raw(f'<rect x="{x+0.5:.1f}" y="{y+0.5}" width="{CW-1:.1f}" height="99" rx="14" fill="{col}" '
+        r, c = divmod(i, COLS)
+        x = 32 + c * (CW + GAP)
+        y = 118 + r * (CH + GAP)
+        s.raw(f'<rect x="{x+0.5:.1f}" y="{y+0.5}" width="{CW-1:.1f}" height="{CH-1}" rx="14" fill="{col}" '
               f'fill-opacity="0.07" stroke="{col}" stroke-opacity="0.55"/>')
-        s.raw(f'<circle cx="{x+30:.1f}" cy="{y+30}" r="14" fill="{col}" fill-opacity="0.18"/>')
-        s.icon(ic, x + 21, y + 21, 18, col, 2.2)
-        s.text(x + 18, y + 68, t, "plex", 600, 15, ICE)
-        s.text(x + 18, y + 88, d, "plex", 400, 12.5, MIST)
+        s.raw(f'<circle cx="{x+38:.1f}" cy="{y+CH/2}" r="18" fill="{col}" fill-opacity="0.18"/>')
+        s.icon(ic, x + 27, y + CH / 2 - 11, 22, col, 2.2)
+        s.text(x + 70, y + 34, t, "plex", 600, 16.5, ICE)
+        s.text(x + 70, y + 56, d, "plex", 400, 13.5, MIST)
     s.save("outcomes.svg")
+
+
+# =============================================================================
+# 6. AUTO-ROLLBACK
+# =============================================================================
+def rollback():
+    W, H = 1000, 440
+    s = Svg(W, H, "FastPatch auto-rollback: baseline, patch, restart window, health check. Healthy: done. "
+                  "Unhealthy: stage removal of the new update with no restart, next restart, proven gone, "
+                  "then deny the update in your approval policy.")
+    frame(s, W, H, G1, 0.85, 0.15)
+    heading(s, 40, 52, "AUTO-ROLLBACK  ·  NEW", "A bad patch never sticks.")
+    NW, NH = 132, 54
+    TOP, BOT = 168, 300
+
+    def node(cx, cy, icon, label, col, cls=""):
+        x, y = cx - NW / 2, cy - NH / 2
+        s.raw(f'<rect class="{cls}" x="{x+0.5:.1f}" y="{y+0.5:.1f}" width="{NW-1}" height="{NH-1}" rx="14" '
+              f'fill="{CHIP}" stroke="{col}" stroke-opacity="0.8"/>')
+        s.icon(icon, x + 14, cy - 10, 20, col, 2)
+        lines = wrap(label, NW - 52, "plex", 600, 13.5)
+        y0 = cy + 5 - (len(lines) - 1) * 8.5
+        for j, ln in enumerate(lines):
+            s.text(x + 42, y0 + j * 17, ln, "plex", 600, 13.5, ICE)
+
+    def arrow(x1, y1, x2, y2, col, cls="rbflow"):
+        s.raw(f'<path class="{cls}" d="M{x1:.1f} {y1:.1f}L{x2:.1f} {y2:.1f}" stroke="{col}" stroke-width="2" '
+              f'stroke-dasharray="5 7" fill="none"/>')
+        if y1 == y2:
+            s.raw(f'<path d="M{x2-7:.1f} {y2-5:.1f}l7 5-7 5" stroke="{col}" stroke-width="2" fill="none" '
+                  f'stroke-linecap="round" stroke-linejoin="round"/>')
+        else:
+            s.raw(f'<path d="M{x2-5:.1f} {y2-7:.1f}l5 7 5-7" stroke="{col}" stroke-width="2" fill="none" '
+                  f'stroke-linecap="round" stroke-linejoin="round"/>')
+
+    xs = [106, 262, 418, 574]
+    top = [("lines", "Baseline", CYAN), ("wrench", "Patch", CYAN), ("clock", "Restart window", CYAN),
+           ("pulse", "Health check", AMBER)]
+    for i in range(3):
+        arrow(xs[i] + NW / 2 + 4, TOP, xs[i + 1] - NW / 2 - 4, TOP, CYAN)
+    for (ic, lab, col), x in zip(top, xs):
+        node(x, TOP, ic, lab, col)
+    # healthy branch
+    hx = 890
+    arrow(xs[3] + NW / 2 + 4, TOP, hx - NW / 2 - 4, TOP, G1)
+    s.text((xs[3] + hx) / 2, TOP - 12, "healthy", "plex", 600, 13, G1, anchor="middle")
+    node(hx, TOP, "check", "Done", G1)
+    # unhealthy branch
+    arrow(xs[3], TOP + NH / 2 + 4, xs[3], BOT - NH / 2 - 4, RED)
+    s.text(xs[3] + 10, (TOP + BOT) / 2 + 5, "unhealthy", "plex", 600, 13, RED)
+    bx = [574, 732, 890]
+    bot = [("retry", "Remove the update", RED), ("clock", "Next restart window", CYAN),
+           ("shield", "Proven gone", G1)]
+    for i in range(2):
+        arrow(bx[i] + NW / 2 + 4, BOT, bx[i + 1] - NW / 2 - 4, BOT, CYAN if i == 0 else G1)
+    for (ic, lab, col), x in zip(bot, bx):
+        node(x, BOT, ic, lab, col)
+    s.text(bx[0], BOT + NH / 2 + 24, "staged, no restart forced", "plex", 400, 13, MIST, anchor="middle")
+    s.text(bx[2], BOT + NH / 2 + 24, "then: deny the update in", "plex", 400, 13, MIST, anchor="middle")
+    s.text(bx[2], BOT + NH / 2 + 42, "your approval policy", "plex", 400, 13, MIST, anchor="middle")
+
+    # triggers
+    s.text(40, 262, "WHAT COUNTS AS UNHEALTHY", "mono", 700, 11.5, RED, extra='letter-spacing="1.6"')
+    trig = ["A service that ran before the patch is down",
+            "A service you marked as required is down",
+            "Windows crashed since the patch"]
+    for k, t in enumerate(trig):
+        y = 292 + k * 26
+        s.icon("x", 40, y - 13, 16, RED, 2.4)
+        s.text(64, y, t, "plex", 400, 14.5, "#C8D5EA")
+    s.text(40, 392, "Only the new update is removed  ·  one attempt per update", "plex", 400, 13, MIST)
+    s.text(40, 412, "Servicing stack updates can't be removed, so they go to an engineer", "plex", 400, 13, MIST)
+    s.css.append("@keyframes rbflow{to{stroke-dashoffset:-48}}"
+                 "@media (prefers-reduced-motion:no-preference){.rbflow{animation:rbflow 2.2s linear infinite}}")
+    s.save("rollback.svg")
 
 
 fastpatch_hero()
@@ -611,5 +704,6 @@ features()
 loop()
 guardrails()
 outcomes()
+rollback()
 for p in sorted(OUT.glob("*.svg")):
     print(f"{p.name:24s} {p.stat().st_size/1024:6.1f} KB")

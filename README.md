@@ -1,18 +1,19 @@
 <div align="center">
 
-<img src="assets/hero.svg" width="100%" alt="FastPatch: patch night, on autopilot. Self-healing Windows patch remediation for Kaseya VSA fleets. 600+ machines patched at 99% success. macOS support is next.">
+<img src="assets/hero.svg" width="100%" alt="FastPatch: patch night, on autopilot. Self-healing Windows patch remediation for Kaseya VSA fleets. 600+ machines patched at 99% success. New: auto-rollback, and macOS patching in beta.">
 
 <br>
 
 <img src="https://img.shields.io/badge/status-live_in_production-3FD07A?style=for-the-badge&labelColor=0B1730" alt="Status: live in production">
 <img src="https://img.shields.io/badge/platform-Kaseya_VSA-38C8F0?style=for-the-badge&labelColor=0B1730" alt="Platform: Kaseya VSA">
 <img src="https://img.shields.io/badge/Windows-supported-38C8F0?style=for-the-badge&labelColor=0B1730&logo=windows&logoColor=white" alt="Windows supported">
-<img src="https://img.shields.io/badge/macOS-coming_next-F5C451?style=for-the-badge&labelColor=0B1730&logo=apple&logoColor=white" alt="macOS coming next">
+<img src="https://img.shields.io/badge/macOS-beta-F5C451?style=for-the-badge&labelColor=0B1730&logo=apple&logoColor=white" alt="macOS beta">
+<img src="https://img.shields.io/badge/new-auto--rollback-3FD07A?style=for-the-badge&labelColor=0B1730" alt="New: auto-rollback">
 <img src="https://img.shields.io/badge/PowerShell-5391FE?style=for-the-badge&logo=powershell&logoColor=white&labelColor=0B1730" alt="PowerShell">
 
 ### Find every failed Windows update. Name the cause. Apply the approved fix. Prove it landed.
 
-**[Features](#-features)** · **[How it runs](#-how-it-runs)** · **[Guardrails](#%EF%B8%8F-guardrails)** · **[Results](#-results-in-production)** · **[Roadmap](#%EF%B8%8F-roadmap)** · **[FAQ](#-faq)** · **[Get FastPatch](#-get-fastpatch)**
+**[Features](#-features)** · **[Auto-rollback](#-new-auto-rollback)** · **[macOS](#-macos-patching-beta)** · **[How it runs](#-how-it-runs)** · **[Guardrails](#%EF%B8%8F-guardrails)** · **[Results](#-results-in-production)** · **[Roadmap](#%EF%B8%8F-roadmap)** · **[FAQ](#-faq)** · **[Get FastPatch](#-get-fastpatch)**
 
 </div>
 
@@ -26,7 +27,34 @@ Every MSP knows patch night. Kaseya says a few dozen machines failed. Someone ex
 
 ## ✨ Features
 
-<img src="assets/features.svg" width="100%" alt="Features: diagnoses before it fixes; names the real cause; fixes inside your policy; proof, not job status; ticket-ready output; nothing new to install.">
+<img src="assets/features.svg" width="100%" alt="Features: diagnoses before it fixes; names the real cause; fixes inside your policy; proof, not job status; ticket-ready output; nothing new to install; auto-rollback (new); patches Macs too (beta); bounded by design.">
+
+## 🆕 New: auto-rollback
+
+<img src="assets/rollback.svg" width="100%" alt="Auto-rollback: baseline, patch, restart window, health check. Healthy means done. Unhealthy means the new update is removed with no restart forced, then proven gone after the next restart window, and you deny it in your approval policy.">
+
+A patch that installs cleanly can still break a machine. FastPatch now takes a **baseline before the patch** and **checks the machine again after your restart window**. If something that worked before is broken, it removes only the update that just landed.
+
+- 🩺 **Knows what "broken" means:** a service that ran before the patch is down, a service you marked as required is down, or Windows crashed since the patch
+- 🎯 **Removes only the new update,** never anything that was already there
+- 🔁 **Never forces a restart:** removal is staged and completes in your next restart window
+- ✅ **Proves it:** "rolled back" only after a restart shows the update gone and the machine healthy
+- 🧯 **Knows its limits:** one attempt per update; servicing stack updates can't be removed, so they go to an engineer
+- 📝 **Closes the loop:** tells you which KB to deny in your approval policy, without touching your update settings itself
+
+More in [docs/auto-rollback.md](docs/auto-rollback.md).
+
+## 🍎 macOS patching (beta)
+
+FastPatch now patches Macs through Apple's own `softwareupdate`, with the same loop, guardrails and outcome labels as Windows.
+
+| Update type | What FastPatch does | Outcome |
+|---|---|---|
+| No restart needed (Safari, security data, tools) | Installs it now | ✅ Fixed itself |
+| Restart needed, **Intel** Mac | Installs it; it completes in your restart window | ⏳ Waiting for a restart |
+| Restart needed, **Apple silicon** Mac | Downloads it; Apple requires a user or MDM to authorise the install | 🔀 Needs a decision |
+
+Before touching anything it checks free disk space, battery (it waits if a laptop is low and unplugged) and that Apple's update catalog is reachable. It never restarts a Mac and never changes Software Update settings. More in [docs/macos.md](docs/macos.md).
 
 ## 🔁 How it runs
 
@@ -58,9 +86,9 @@ Every machine gets the same five timestamped checks before anything is changed.
 
 ## 🚦 Every machine gets an answer
 
-<img src="assets/outcomes.svg" width="100%" alt="Five outcomes: fixed itself, try again later, waiting for a restart, needs a decision, needs an engineer.">
+<img src="assets/outcomes.svg" width="100%" alt="Six outcomes: fixed itself, try again later, waiting for a restart, needs a decision, needs an engineer, rolled back.">
 
-When FastPatch can't finish a machine, it never fails silently. It hands the machine back with one of five labels, so nobody has to work out what happened.
+When FastPatch can't finish a machine, it never fails silently. It hands the machine back with one of six labels, so nobody has to work out what happened.
 
 ## ⚖️ Before and after
 
@@ -85,8 +113,9 @@ When FastPatch can't finish a machine, it never fails silently. It hands the mac
 | | Item | Status |
 |:-:|---|---|
 | 🪟 | Windows patch remediation through Kaseya VSA | ✅ Live in production |
-| 🍎 | macOS support | 🔜 Next build |
-| 🔁 | Reboot proof | 📝 Planned |
+| 🔁 | Auto-rollback for Windows | 🆕 New, in beta |
+| 🍎 | macOS patching | 🆕 New, in beta |
+| 🔂 | Reboot proof | 📝 Planned |
 | 📊 | Central result collection | 📝 Planned |
 | 🩺 | Health checks | 📝 Planned |
 
@@ -113,7 +142,7 @@ No. It works with whoever manages updates today and never rewrites update policy
 <details>
 <summary><b>What happens when it can't fix a machine?</b></summary>
 <br>
-The machine comes back with one of five labels: fixed itself, try again later, waiting for a restart, needs a decision, or needs an engineer. Your NOC works those exceptions only.
+The machine comes back with one of six labels: fixed itself, try again later, waiting for a restart, needs a decision, needs an engineer, or rolled back. Your NOC works those exceptions only.
 </details>
 
 <details>
@@ -129,9 +158,21 @@ It runs the same flow on 10 machines or 100+, and has patched 600+ machines in p
 </details>
 
 <details>
+<summary><b>What if a patch breaks a machine?</b></summary>
+<br>
+Auto-rollback compares the machine with its pre-patch baseline after your restart window. If a service that ran before is down, a required service is down, or Windows crashed, it removes only the new update, with no restart forced, and confirms it's gone after the next restart.
+</details>
+
+<details>
 <summary><b>Does it support Macs?</b></summary>
 <br>
-macOS support is the next build on the roadmap.
+Yes, in beta. FastPatch patches Macs through Apple's softwareupdate with the same guardrails. On Apple silicon, updates that need a restart are downloaded and wait for a user or MDM to authorise them, because Apple requires that.
+</details>
+
+<details>
+<summary><b>Can it roll back a Mac update?</b></summary>
+<br>
+No. Apple doesn't support removing installed macOS updates, so auto-rollback is Windows only.
 </details>
 
 <details>
@@ -160,7 +201,9 @@ fastpatch/
 ├── README.md            you are here
 ├── docs/
 │   ├── how-it-works.md  the run loop and the five checks in detail
-│   ├── guardrails.md    what FastPatch will never do, and the five outcomes
+│   ├── guardrails.md    what FastPatch will never do, and the six outcomes
+│   ├── auto-rollback.md how a bad patch is detected, removed and proven gone
+│   ├── macos.md         Mac patching (beta): what it installs and what it waits on
 │   └── faq.md           answers for MSP owners, NOC leads and security teams
 ├── assets/              README graphics (animated SVG)
 ├── tools/
